@@ -1,7 +1,6 @@
 #include "led.h"
 #include "cmsis_os2.h"
-
-void SystemCoreClockUpdate(void);
+#include "bracer.h"
 
 void app_main(void *argument){
   while(1){
@@ -13,13 +12,8 @@ void app_main(void *argument){
 int main(){
   //hardware config
   led_init();
-  
-  //os config
-  SystemCoreClockUpdate();
-  osKernelInitialize();
-  osThreadNew(app_main, NULL, NULL);
-  osKernelStart();
-  
+  //bracer
+  bracer_init(app_main);
   while(1){
   }
 }

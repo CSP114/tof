@@ -169,7 +169,7 @@
 //   <i> Defines stack size for threads with zero stack size specified.
 //   <i> Default: 200
 #ifndef OS_STACK_SIZE
-#define OS_STACK_SIZE               200
+#define OS_STACK_SIZE               1000
 #endif
  
 //   <o>Idle Thread Stack size [bytes] <72-1073741824:8>
@@ -190,7 +190,7 @@
 //   <i> Initialize thread stack with watermark pattern for analyzing stack usage.
 //   <i> Enabling this option increases significantly the execution time of thread creation.
 #ifndef OS_STACK_WATERMARK
-#define OS_STACK_WATERMARK          0
+#define OS_STACK_WATERMARK          1
 #endif
  
 //   <o>Processor mode for Thread execution 
