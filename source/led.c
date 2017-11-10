@@ -18,3 +18,11 @@ void led_init(void){
 void led_toggle(void){
   LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_13);
 }
+
+void led_write(uint32_t state){
+  if(state){
+    LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_13);
+  }else{
+    LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_13);
+  }
+}
