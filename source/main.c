@@ -1,5 +1,4 @@
 #include "led.h"
-#include "cmsis_os2.h"
 #include "bracer.h"
 
 void app_main(void *argument){
