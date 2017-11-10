@@ -3,7 +3,7 @@
  * Auto generated Run-Time-Environment Component Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'template_stm32f3' 
+ * Project: 'keil_project' 
  * Target:  'Target 1' 
  */
 
