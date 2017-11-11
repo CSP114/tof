@@ -395,6 +395,11 @@
               <FileType>1</FileType>
               <FilePath>..\source\bracer.c</FilePath>
             </File>
+            <File>
+              <FileName>hld_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\hld_uart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
