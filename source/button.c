@@ -1,5 +1,4 @@
 #include "button.h"
-#include "bracer.h"
 #include "stm32f3xx_ll_bus.h"
 #include "stm32f3xx_ll_gpio.h"
 #include "stm32f3xx_ll_exti.h"
@@ -18,13 +17,11 @@ void button_init(void){
   LL_GPIO_Init(BUTTON_PORT, &gpio);
 }
 
-void (*onChangeCallback)(int buttonState);
+int button_read(void){
+    return LL_GPIO_IsInputPinSet(BUTTON_PORT, BUTTON_PIN);
+};
 
-void button_event_handler(void* err, void* context){
-  if(onChangeCallback){
-    onChangeCallback((uint32_t) context);
-  }
-}
+void (*onChangeCallback)(int buttonState);
 
 void button_onChange(void(*callback)(int buttonState)){
   onChangeCallback = callback;
@@ -38,14 +35,15 @@ void button_onChange(void(*callback)(int buttonState)){
   exti.Line_0_31 = LL_EXTI_LINE_13;
   LL_EXTI_Init(&exti);
   LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
-  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE13); 
-  
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE13);
+
   NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-
 void EXTI15_10_IRQHandler(void){
-  uint32_t button_state = LL_GPIO_IsInputPinSet(BUTTON_PORT, BUTTON_PIN);
+  uint32_t button_state = button_read();
   LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
-  bracer_postEvent(button_event_handler, NULL, (void*)button_state, 0);
+  if(onChangeCallback){
+      onChangeCallback(button_state);
+  }
 }

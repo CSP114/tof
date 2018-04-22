@@ -3,5 +3,6 @@
 
 void button_init(void);
 void button_onChange(void(*callback)(int buttonState));
+int button_read(void);
 
 #endif

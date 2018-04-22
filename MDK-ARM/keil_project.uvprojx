@@ -381,19 +381,9 @@
           <GroupName>Source Group 1</GroupName>
           <Files>
             <File>
-              <FileName>main.c</FileName>
+              <FileName>button.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\source\main.c</FilePath>
-            </File>
-            <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\source\led.c</FilePath>
-            </File>
-            <File>
-              <FileName>bracer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\source\bracer.c</FilePath>
+              <FilePath>..\source\button.c</FilePath>
             </File>
             <File>
               <FileName>hld_uart.c</FileName>
@@ -401,20 +391,30 @@
               <FilePath>..\source\hld_uart.c</FilePath>
             </File>
             <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\led.c</FilePath>
+            </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\main.c</FilePath>
+            </File>
+            <File>
               <FileName>serial_stdio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\source\serial_stdio.c</FilePath>
+            </File>
+            <File>
+              <FileName>delay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\delay.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Drivers</GroupName>
           <Files>
-            <File>
-              <FileName>button.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\source\button.c</FilePath>
-            </File>
             <File>
               <FileName>stm32f3xx_ll_adc.c</FileName>
               <FileType>1</FileType>
