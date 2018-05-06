@@ -188,6 +188,7 @@ void timer6_init(uint16_t period,int use_us){
 static timer_callback_t timer6_callback;
 
 void timer6_enableIRQ(timer_callback_t callback){
+    LL_TIM_SetTriggerOutput(TIM6, LL_TIM_TRGO_UPDATE);
     timer6_callback  = callback;
     LL_TIM_EnableIT_UPDATE(TIM6);
     NVIC_EnableIRQ(TIM6_DAC_IRQn);
