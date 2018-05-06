@@ -10,13 +10,12 @@
 void onTimerEvent(void){
 }
 
-int data0, data1;
+int data0;
 int counter = 0;
 
 void onADCComplete(void){
     led_toggle();
-    data0 = adc_injected_read_rank(0);
-    data1 = adc_injected_read_rank(1);
+    data0 = adc_regular_read();
     counter++;
 }
 
@@ -25,9 +24,9 @@ int main(){
     timer6_init(500, 0);
     timer6_enableIRQ(onTimerEvent);
     timer6_start();
-    adc_injected_init(14);
-    adc_injected_enableIRQ(onADCComplete);
-    adc_injected_capture();
+    adc_regular_init(14);
+    adc_regular_enableIRQ(onADCComplete);
+    adc_regular_capture();
     while(1){
     }
 }

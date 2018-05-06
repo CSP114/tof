@@ -15,6 +15,8 @@ void adc_config_pins(void){
     LL_GPIO_Init(GPIOC, &gpio);
 }
 
+//Injected Channels
+
 void adc_injected_init(int trigger){
     adc_config_pins();
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_ADC1);
@@ -80,6 +82,7 @@ void adc_injected_waitUntilComplete(void){
 
 void ADC1_IRQHandler(void){
     LL_ADC_ClearFlag_JEOS(ADC1);
+    LL_ADC_ClearFlag_EOS(ADC1);
     adc1_callback();
 }
 
@@ -88,7 +91,55 @@ uint16_t adc_injected_read_rank(int rank){
     return LL_ADC_INJ_ReadConversionData12(ADC1,ranks[rank]);
 }
 
+//Regular channels
+void adc_regular_init(int trigger){
+    adc_config_pins();
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_ADC1);
+    LL_RCC_SetADCClockSource(LL_RCC_ADC1_CLKSRC_HCLK);
 
-void adc_dma_config(void){
 
+    //Common configuration
+    LL_ADC_CommonInitTypeDef common;
+    LL_ADC_CommonStructInit(&common);
+    common.CommonClock = LL_ADC_CLOCK_SYNC_PCLK_DIV1;
+    LL_ADC_CommonInit(ADC1_COMMON, &common);
+
+
+    LL_ADC_EnableInternalRegulator(ADC1);
+    delay_ms(1);
+
+    LL_ADC_StartCalibration(ADC1, LL_ADC_SINGLE_ENDED);
+    while(LL_ADC_IsCalibrationOnGoing(ADC1));
+
+    LL_ADC_InitTypeDef myADC;
+    LL_ADC_StructInit(&myADC);
+    myADC.Resolution = LL_ADC_RESOLUTION_12B;
+    myADC.DataAlignment = LL_ADC_DATA_ALIGN_RIGHT;
+    LL_ADC_Init(ADC1, &myADC);
+
+    LL_ADC_REG_InitTypeDef sequencer;
+    LL_ADC_REG_StructInit(&sequencer);
+    sequencer.TriggerSource = LL_ADC_REG_TRIG_EXT_TIM6_TRGO;
+    sequencer.SequencerLength = 0;
+    LL_ADC_REG_Init(ADC1, &sequencer);
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_6);
+    
+    LL_ADC_Enable(ADC1);
+    while(!LL_ADC_IsActiveFlag_ADRDY(ADC1)){};      
+}
+
+void adc_regular_enableIRQ(adc_callback_t callback){
+    adc1_callback = callback;
+    LL_ADC_ClearFlag_EOS(ADC1);
+    LL_ADC_EnableIT_EOS(ADC1);
+    NVIC_EnableIRQ(ADC1_IRQn);
+}
+
+void adc_regular_capture(void){
+    LL_ADC_ClearFlag_EOS(ADC1);
+    LL_ADC_REG_StartConversion(ADC1);
+}
+
+uint16_t adc_regular_read(void){
+    return LL_ADC_REG_ReadConversionData12(ADC1);
 }
