@@ -3,6 +3,7 @@
 #include "stm32f3xx_ll_gpio.h"
 #include "stm32f3xx_ll_rcc.h"
 #include "stm32f3xx_ll_adc.h"
+#include "stm32f3xx_ll_dma.h"
 #include "delay.h"
 
 //Init PA0-PA1
@@ -11,7 +12,7 @@ void adc_config_pins(void){
     LL_GPIO_InitTypeDef gpio;
     LL_GPIO_StructInit(&gpio);
     gpio.Mode = LL_GPIO_MODE_ANALOG;
-    gpio.Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1;
+    gpio.Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1| LL_GPIO_PIN_2 | LL_GPIO_PIN_3;
     LL_GPIO_Init(GPIOC, &gpio);
 }
 
@@ -92,7 +93,7 @@ uint16_t adc_injected_read_rank(int rank){
 }
 
 //Regular channels
-void adc_regular_init(int trigger){
+void adc_regular_init(void){
     adc_config_pins();
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_ADC1);
     LL_RCC_SetADCClockSource(LL_RCC_ADC1_CLKSRC_HCLK);
@@ -120,12 +121,15 @@ void adc_regular_init(int trigger){
     LL_ADC_REG_InitTypeDef sequencer;
     LL_ADC_REG_StructInit(&sequencer);
     sequencer.TriggerSource = LL_ADC_REG_TRIG_EXT_TIM6_TRGO;
-    sequencer.SequencerLength = 0;
+    sequencer.SequencerLength = 3;
     LL_ADC_REG_Init(ADC1, &sequencer);
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_6);
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_7);
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, LL_ADC_CHANNEL_8);
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_4, LL_ADC_CHANNEL_9);
     
     LL_ADC_Enable(ADC1);
-    while(!LL_ADC_IsActiveFlag_ADRDY(ADC1)){};      
+    while(!LL_ADC_IsActiveFlag_ADRDY(ADC1)){};  
 }
 
 void adc_regular_enableIRQ(adc_callback_t callback){
@@ -142,4 +146,47 @@ void adc_regular_capture(void){
 
 uint16_t adc_regular_read(void){
     return LL_ADC_REG_ReadConversionData12(ADC1);
+}
+
+static adc_callback_t dma_callback;
+uint16_t reloadNData;
+
+void adc_dma_config(uint16_t* dest_address, uint16_t nData, adc_callback_t callback){
+    dma_callback = callback;
+    reloadNData = nData;
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+    LL_DMA_InitTypeDef dma;
+    LL_DMA_StructInit(&dma);
+    dma.PeriphOrM2MSrcAddress  = (uint32_t) &(ADC1->DR);
+    dma.MemoryOrM2MDstAddress  = (uint32_t) dest_address;
+    dma.Direction              = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+    dma.Mode                   = LL_DMA_MODE_NORMAL;
+    dma.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
+    dma.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
+    dma.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
+    dma.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
+    dma.NbData                 = nData;
+    dma.Priority               = LL_DMA_PRIORITY_HIGH;
+    LL_DMA_Init(DMA1, LL_DMA_CHANNEL_1, &dma);
+    
+    LL_ADC_Disable(ADC1);
+    
+    LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_UNLIMITED);
+     
+    LL_ADC_Enable(ADC1);
+    while(!LL_ADC_IsActiveFlag_ADRDY(ADC1)){};
+    
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
+    NVIC_EnableIRQ(DMA1_Channel1_IRQn);  
+}
+
+
+void DMA1_Channel1_IRQHandler(void){
+    LL_DMA_ClearFlag_TC1(DMA1);
+    LL_ADC_REG_StopConversion(ADC1);
+    dma_callback();
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, reloadNData);
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
 }
