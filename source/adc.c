@@ -52,11 +52,28 @@ void adc_init(void){
     while(!LL_ADC_IsActiveFlag_ADRDY(ADC1)){};
 }
 
+static adc_callback_t adc1_callback;
+
+void adc_enableIRQ(adc_callback_t callback){
+    adc1_callback = callback;
+    LL_ADC_ClearFlag_JEOS(ADC1);
+    LL_ADC_EnableIT_JEOS(ADC1);
+	NVIC_EnableIRQ(ADC1_IRQn);
+}
+
 void adc_capture(void){
     LL_ADC_ClearFlag_JEOS(ADC1);
-    LL_ADC_INJ_StartConversion(ADC1);
+    LL_ADC_INJ_StartConversion(ADC1);    
+}
+
+void adc_waitUntilComplete(void){
     while(!LL_ADC_IsActiveFlag_JEOS(ADC1)){};
     LL_ADC_ClearFlag_JEOS(ADC1);
+}
+
+void ADC1_IRQHandler(void){
+    LL_ADC_ClearFlag_JEOS(ADC1);
+    adc1_callback();
 }
 
 uint16_t adc_read_rank(int rank){

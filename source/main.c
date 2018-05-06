@@ -8,6 +8,10 @@
 #include "timers.h"
 
 void onTimerEvent(void){
+    adc_capture();
+}
+
+void onADCComplete(void){
     led_toggle();
 }
 
@@ -16,6 +20,9 @@ int main(){
     timer6_init(500, 0);
     timer6_enableIRQ(onTimerEvent);
     timer6_start();
+    adc_init();
+    adc_enableIRQ(onADCComplete);
+    adc_capture();
     while(1){
     }
 }
