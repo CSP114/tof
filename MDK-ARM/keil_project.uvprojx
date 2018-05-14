@@ -431,6 +431,11 @@
               <FileType>1</FileType>
               <FilePath>..\source\hld_i2c.c</FilePath>
             </File>
+            <File>
+              <FileName>bme280.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\bme280.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

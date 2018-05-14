@@ -8,6 +8,7 @@
 #include "button.h"
 #include "mpu6050.h"
 #include "hld_i2c.h"
+#include "bme280.h"
 
 void onTimerEvent(void){
 }
@@ -49,11 +50,19 @@ int main(){
     hld_i2c_t* i2c = i2c1_init();
     mpu6050_init(i2c);
     int16_t datax, datay, dataz;
+    BME280_init(i2c);
+    //BME280_setTempCal(-4);
+    float humidity, temperature, pressure;
     while(1){
+        BME280_readSensor();
+        humidity = BME280_getHumidity();
+        temperature = BME280_getTemperature_C();
+        pressure = BME280_getPressure_HP();
         datax = mpu6050_read_axis(i2c, 'x');
         datay = mpu6050_read_axis(i2c, 'y');
         dataz = mpu6050_read_axis(i2c, 'z');
-        serial_printf(uart2_puts, "x=%f, y=%f, z=%f\n", datax*(16.0/65536), datay*(16.0/65536), dataz*(16.0/65536));
+        serial_printf(uart2_puts, "x=%f, y=%f, z=%f, t=%f, p=%f, h=%f\n",
+            datax*(16.0/65536), datay*(16.0/65536), dataz*(16.0/65536), temperature, pressure, humidity);
         delay_ms(250);
     }
 }
