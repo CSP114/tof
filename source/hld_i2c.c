@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "stm32fxx_ll_gpio.h"
-#include "stm32f0xx_ll_bus.h"
-#include "stm32f0xx_ll_i2c.h"
+#include "stm32f3xx_ll_gpio.h"
+#include "stm32f3xx_ll_bus.h"
+#include "stm32f3xx_ll_i2c.h"
 
 hld_i2c_t i2c1_struct;
 
@@ -15,6 +15,7 @@ int8_t i2c1_sendPacket(uint8_t address,  uint8_t *data, uint8_t nbytes);
 int8_t i2c1_readPacket(uint8_t address, uint8_t internal_address, uint8_t *data, uint8_t nbytes);
 int8_t i2c1_send_packetAtRegister(uint8_t address, uint8_t regAddress, uint8_t *data, uint8_t nbytes);
 
+//user pb6:I2C1_SCL and pb7:I2C1_SDA
 hld_i2c_t* i2c1_init(void){
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
     LL_GPIO_InitTypeDef gpio;
@@ -22,7 +23,7 @@ hld_i2c_t* i2c1_init(void){
     gpio.Pin = LL_GPIO_PIN_6 | LL_GPIO_PIN_7;
     gpio.Mode = LL_GPIO_MODE_ALTERNATE;
     gpio.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
-    gpio.Alternate = LL_GPIO_AF_1;
+    gpio.Alternate = LL_GPIO_AF_4;
     LL_GPIO_Init(GPIOB, &gpio);
 
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
@@ -68,7 +69,7 @@ int8_t i2c1_sendPacket(uint8_t address,  uint8_t *data, uint8_t nbytes){
 
     LL_I2C_HandleTransfer(I2C1, (address << 1), LL_I2C_ADDRSLAVE_7BIT, nbytes, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_WRITE);
     LL_I2C_EnableIT_TX(I2C1);
-    NVIC_EnableIRQ(I2C1_IRQn);
+    NVIC_EnableIRQ(I2C1_EV_IRQn);
 
     while(transfer_in_progress){};
 
@@ -106,7 +107,7 @@ int8_t i2c1_readPacket(uint8_t address, uint8_t internal_address, uint8_t *data,
     LL_I2C_GenerateStartCondition(I2C1);
 
     LL_I2C_EnableIT_RX(I2C1);
-    NVIC_EnableIRQ(I2C1_IRQn);
+    NVIC_EnableIRQ(I2C1_EV_IRQn);
 
     while(transfer_in_progress){};
 
@@ -114,7 +115,7 @@ int8_t i2c1_readPacket(uint8_t address, uint8_t internal_address, uint8_t *data,
 }
 
 
-void I2C1_IRQHandler(void){
+void I2C1_EV_IRQHandler(void){
     if(LL_I2C_IsActiveFlag_TXIS(I2C1) && (xfer_direction == I2C_WRITE)){
         LL_I2C_TransmitData8(I2C1, *p_data);
         p_data++;
@@ -122,7 +123,7 @@ void I2C1_IRQHandler(void){
         if(!bytes_remaining){
             transfer_in_progress = false;
             LL_I2C_DisableIT_TX(I2C1);
-            NVIC_DisableIRQ(I2C1_IRQn);
+            NVIC_DisableIRQ(I2C1_EV_IRQn);
         }
     }
     if(LL_I2C_IsActiveFlag_RXNE(I2C1) && (xfer_direction == I2C_READ)){
@@ -132,7 +133,7 @@ void I2C1_IRQHandler(void){
         if(!bytes_remaining){
             transfer_in_progress = false;
             LL_I2C_DisableIT_RX(I2C1);
-            NVIC_DisableIRQ(I2C1_IRQn);
+            NVIC_DisableIRQ(I2C1_EV_IRQn);
         }
     }
 }
