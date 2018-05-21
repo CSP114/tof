@@ -12,7 +12,7 @@ void led_init(void){
   gpio.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   gpio.Pin = LL_GPIO_PIN_13;
   LL_GPIO_Init(GPIOB, &gpio);
-  LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_13);
+  GPIOB->BSRR = 0x1 << 13;
 }
 
 void led_toggle(void){

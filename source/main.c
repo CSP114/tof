@@ -4,65 +4,89 @@
 #include "serial_stdio.h"
 #include "delay.h"
 #include "adc.h"
+#include "stm32f3xx.h"                  // Device header
 #include "timers.h"
 #include "button.h"
-#include "mpu6050.h"
-#include "hld_i2c.h"
-#include "bme280.h"
 
 void onTimerEvent(void){
 }
 
-#define SAMPLES 100
+void signal_start(void);
+void signal_config(void);
+
+#define SAMPLES 500
 #define CHANNELS 4
 #define TOTAL_SAMPLED_DATA SAMPLES * CHANNELS
 
-int data0;
 int counter = 0;
 uint16_t buffer[TOTAL_SAMPLED_DATA];
-int complete = 0;
+int capture_complete = 1;
+int generating_signal = 0;
 
 void onADCComplete(void){
-    led_toggle();
     counter++;
 }
 
 void onTransferComplete(void){
-    complete = 1;
+    for (int i = 0; i < TOTAL_SAMPLED_DATA; i++){
+        serial_printf(uart2_puts, "%hu ", buffer[i]);
+    }
+    capture_complete = 1;
 }
 
 void onButtonChange(int state){
-    adc_regular_capture();
-    complete = 0;
+
+    if ((state) && (!generating_signal) && (capture_complete)){
+        signal_start();
+        adc_regular_capture();
+        generating_signal = 1;
+        capture_complete = 0;
+    }       
+}
+
+void configure_adc_with_timer_trigger(void){
+    timer6_init(100, 1);
+    timer6_enableIRQ(onTimerEvent);
+    timer6_start();
+    adc_regular_init();
+    adc_regular_enableIRQ(onADCComplete);
+    adc_dma_config(buffer, TOTAL_SAMPLED_DATA, onTransferComplete);
+}
+
+
+
+void signal_generator_callback(void){
+    static int count = 0;
+    if(count < 20){
+        led_toggle();
+        count++;        
+    }else if(count < 2000){
+        count++;
+    }else{
+        count = 0;
+        generating_signal = 0;
+        timer15_stop();
+    }
+}
+
+void signal_start(void){
+    timer15_start();
+}
+
+void signal_config(void){
+    timer15_init(25, 1);
+    timer15_enableIRQ(signal_generator_callback);
 }
 
 int main(){
-    //led_init();
-    //button_init();
-    //timer6_init(100, 1);
-    //timer6_enableIRQ(onTimerEvent);
-    //timer6_start();
-    //adc_regular_init();
-    //adc_regular_enableIRQ(onADCComplete);
-    //adc_dma_config(buffer, TOTAL_SAMPLED_DATA, onTransferComplete);
-    //button_onChange(onButtonChange);
     uart2_init(9600);
-    hld_i2c_t* i2c = i2c1_init();
-    mpu6050_init(i2c);
-    int16_t datax, datay, dataz;
-    BME280_init(i2c);
-    //BME280_setTempCal(-4);
-    float humidity, temperature, pressure;
+    //configure adc capture
+    delay_ms(20);
+    signal_config();
+    led_init();
+    button_init();
+    button_onChange(onButtonChange);
+    configure_adc_with_timer_trigger();
     while(1){
-        BME280_readSensor();
-        humidity = BME280_getHumidity();
-        temperature = BME280_getTemperature_C();
-        pressure = BME280_getPressure_HP();
-        datax = mpu6050_read_axis(i2c, 'x');
-        datay = mpu6050_read_axis(i2c, 'y');
-        dataz = mpu6050_read_axis(i2c, 'z');
-        serial_printf(uart2_puts, "x=%f, y=%f, z=%f, t=%f, p=%f, h=%f\n",
-            datax*(16.0/65536), datay*(16.0/65536), dataz*(16.0/65536), temperature, pressure, humidity);
-        delay_ms(250);
     }
 }
