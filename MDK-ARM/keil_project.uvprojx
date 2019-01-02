@@ -422,19 +422,9 @@
               <FilePath>..\source\timers.c</FilePath>
             </File>
             <File>
-              <FileName>mpu6050.c</FileName>
+              <FileName>tof_analyzer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\source\mpu6050.c</FilePath>
-            </File>
-            <File>
-              <FileName>hld_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\source\hld_i2c.c</FilePath>
-            </File>
-            <File>
-              <FileName>bme280.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\source\bme280.c</FilePath>
+              <FilePath>..\source\tof_analyzer.c</FilePath>
             </File>
           </Files>
         </Group>
